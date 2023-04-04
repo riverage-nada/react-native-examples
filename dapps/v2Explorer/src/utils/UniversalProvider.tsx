@@ -6,6 +6,8 @@ import {ENV_PROJECT_ID, ENV_RELAY_URL} from '@env';
 import {SessionTypes} from '@walletconnect/types';
 import {ethers} from 'ethers';
 import {Alert} from 'react-native';
+import {verifyMessage} from 'ethers/lib/utils';
+import {utf8ToHex} from '@walletconnect/encoding';
 
 export let universalProvider: UniversalProvider;
 export let web3Provider: ethers.providers.Web3Provider | undefined;
@@ -64,3 +66,28 @@ export async function createUniversalProviderSession(callbacks?: {
     callbacks?.onFailure?.(error);
   }
 }
+
+export function verifyEip155MessageSignature(
+  message: string,
+  signature: string,
+  address: string,
+) {
+  verifyMessage(message, signature).toLowerCase() === address.toLowerCase();
+}
+
+export const testSignMessage: () => Promise<any> = async () => {
+  if (!web3Provider) {
+    throw new Error('web3Provider not connected');
+  }
+  const msg = 'Hello World';
+  const hexMsg = utf8ToHex(msg, true);
+  const [address] = await web3Provider.listAccounts();
+  const signature = await web3Provider.send('personal_sign', [hexMsg, address]);
+  const valid = verifyEip155MessageSignature(msg, signature, address);
+  return {
+    method: 'personal_sign',
+    address,
+    valid,
+    result: signature,
+  };
+};

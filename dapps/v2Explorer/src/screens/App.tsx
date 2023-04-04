@@ -21,6 +21,7 @@ import {
   web3Provider,
   clearSession,
   createUniversalProviderSession,
+  testSignMessage,
 } from '../utils/UniversalProvider';
 import ExplorerModal from '../components/ExplorerModal';
 import {DarkTheme, LightTheme} from '../constants/Colors';
@@ -135,12 +136,21 @@ function App(): JSX.Element {
               Address: {currentAccount}
             </Text>
             <TouchableOpacity
+              onPress={testSignMessage}
               style={[
                 styles.blueButton,
                 styles.disconnectButton,
                 isDarkMode && styles.blueButtonDark,
-              ]}
-              onPress={onDisconnect}>
+              ]}>
+              <Text style={styles.blueButtonText}>eth_personal_sign</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onDisconnect}
+              style={[
+                styles.blueButton,
+                styles.disconnectButton,
+                isDarkMode && styles.blueButtonDark,
+              ]}>
               <Text style={styles.blueButtonText}>Disconnect</Text>
             </TouchableOpacity>
           </View>

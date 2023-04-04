@@ -10,6 +10,8 @@ import {DarkTheme, LightTheme} from '../constants/Colors';
 import {WalletInfo} from '../types/api';
 import {navigateDeepLink} from '../utils/ExplorerUtils';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 interface ExplorerItemProps {
   currentWCURI: string;
   walletInfo: WalletInfo;
@@ -21,6 +23,10 @@ function ExplorerItem({currentWCURI, walletInfo}: ExplorerItemProps) {
   const isDarkMode = useColorScheme() === 'dark';
 
   const onPress = () => {
+    AsyncStorage.setItem(
+      'WALLETCONNECT_DEEPLINK_CHOICE',
+      JSON.stringify({href: walletInfo.mobile.universal}),
+    );
     navigateDeepLink(
       walletInfo.mobile.universal,
       walletInfo.mobile.native,
