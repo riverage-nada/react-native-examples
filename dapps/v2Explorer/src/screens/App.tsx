@@ -22,6 +22,7 @@ import {
   clearSession,
   createUniversalProviderSession,
   testSignMessage,
+  testSendEth,
 } from '../utils/UniversalProvider';
 import ExplorerModal from '../components/ExplorerModal';
 import {DarkTheme, LightTheme} from '../constants/Colors';
@@ -145,6 +146,15 @@ function App(): JSX.Element {
               <Text style={styles.blueButtonText}>eth_personal_sign</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={testSendEth}
+              style={[
+                styles.blueButton,
+                styles.disconnectButton,
+                isDarkMode && styles.blueButtonDark,
+              ]}>
+              <Text style={styles.blueButtonText}>eth_sendTransaction</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={onDisconnect}
               style={[
                 styles.blueButton,
@@ -200,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: LightTheme.accent,
     borderRadius: 20,
-    width: 150,
+    width: 170,
     height: 50,
     borderWidth: 1,
     borderColor: LightTheme.overlayThin,
