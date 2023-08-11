@@ -5,14 +5,13 @@ import {
   useColorScheme,
   View,
   StyleSheet,
-  Platform,
   TouchableOpacity,
   Image,
 } from 'react-native';
 
 import {SignClientTypes} from '@walletconnect/types';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 import {SessionTypes} from '@walletconnect/types';
+import {getSdkError} from '@walletconnect/utils';
 import {currentETHAddress, web3wallet, _pair} from '../utils/Web3WalletClient';
 
 import {PairModal} from '../components/Modals/PairModal';
@@ -26,7 +25,8 @@ import {SignTypedDataModal} from '../components/Modals/SignTypedDataModal';
 import {SendTransactionModal} from '../components/Modals/SendTransactionModal';
 import {W3WText} from '../components/W3WText';
 import {TextContent} from '../utils/Text';
-import {CopyWCURIModal} from '../components/Modals/CopyWCURIModal';
+import {CopyURIDialog} from '../components/CopyURIDialog';
+import {handleDeepLinkRedirect} from '../utils/LinkingUtils';
 
 /**
   @notice: HomeScreen for Web3Wallet Example
@@ -40,7 +40,6 @@ import {CopyWCURIModal} from '../components/Modals/CopyWCURIModal';
   5) onSessionRequest: To handle the session request event (i.e. eth_sign, eth_signTypedData, eth_sendTransaction)
 
 **/
-
 const HomeScreen = () => {
   const isDarkMode = useColorScheme() === 'dark';
   const navigation = useNavigation();
@@ -54,8 +53,9 @@ const HomeScreen = () => {
   const [successPair, setSuccessPair] = useState(false);
 
   // Pairing State
-  const [pairedProposal, setPairedProposal] = useState();
-  const [WCURI, setWCUri] = useState<string>();
+  const [pairedProposal, setPairedProposal] =
+    useState<SignClientTypes.EventArguments['session_proposal']>();
+
   const [requestEventData, setRequestEventData] = useState();
   const [requestSession, setRequestSession] = useState();
 
@@ -63,8 +63,21 @@ const HomeScreen = () => {
   const backgroundStyle = {
     flex: 1,
     padding: 16,
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: isDarkMode ? '#141414' : '#FFFFFF',
   };
+
+  async function handleDecline() {
+    setApprovalModal(false);
+
+    if (!pairedProposal) {
+      return;
+    }
+
+    web3wallet.rejectSession({
+      id: pairedProposal.id,
+      reason: getSdkError('USER_REJECTED_METHODS'),
+    });
+  }
 
   async function handleAccept() {
     const {id, params} = pairedProposal;
@@ -85,7 +98,7 @@ const HomeScreen = () => {
         };
       });
 
-      await web3wallet.approveSession({
+      const session = await web3wallet.approveSession({
         id,
         relayProtocol: relays[0].protocol,
         namespaces,
@@ -93,6 +106,9 @@ const HomeScreen = () => {
 
       setApprovalModal(false);
       setSuccessPair(true);
+
+      const sessionMetadata = session?.peer?.metadata;
+      handleDeepLinkRedirect(sessionMetadata?.redirect);
     }
   }
 
@@ -100,13 +116,14 @@ const HomeScreen = () => {
     setCopyDialog(false);
   };
 
-  async function pair() {
-    const pairing = await _pair({uri: WCURI});
+  async function pair(uri: string) {
+    const pairing = await _pair({uri});
     setCopyDialog(false);
-    setWCUri('');
-    if (Platform.OS === 'android') {
+
+    // @notice iOS has an issue with modals, so we need to delay the approval modal
+    setTimeout(() => {
       setApprovalModal(true);
-    }
+    }, 1200);
     return pairing;
   }
 
@@ -164,7 +181,6 @@ const HomeScreen = () => {
       web3wallet.on('session_request', onSessionRequest);
     }
   }, [
-    WCURI,
     approvalModal,
     copyDialog,
     signModal,
@@ -189,18 +205,13 @@ const HomeScreen = () => {
         open={setApprovalModal}
         visible={approvalModal}
         handleAccept={handleAccept}
+        handleDecline={handleDecline}
       />
 
-      <CopyWCURIModal
+      <CopyURIDialog
         pair={pair}
-        wcURI={WCURI}
         setVisible={handleCancel}
-        copyDialog={copyDialog}
-        setApprovalModal={setApprovalModal}
-        setWCUri={setWCUri}
         visible={copyDialog}
-        pairedProposal={pairedProposal}
-        approvalModal={approvalModal}
       />
 
       {requestEventData && requestSession && signModal && (
@@ -256,36 +267,14 @@ const HomeScreen = () => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
-  heading: {
-    fontSize: 34,
-    fontWeight: 'bold',
-  },
-  greyText: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#798686',
-    width: '80%',
-    textAlign: 'center',
-  },
   mainScreenContainer: {
     padding: 20,
     flex: 1,
+    // backgroundColor:'white'
   },
   imageContainer: {
     height: 24,
     width: 24,
-  },
-  container: {
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textInput: {
-    height: 40,
-    margin: 12,
-    borderWidth: 1,
-    padding: 10,
-    width: '80%',
   },
   flexRow: {
     display: 'flex',

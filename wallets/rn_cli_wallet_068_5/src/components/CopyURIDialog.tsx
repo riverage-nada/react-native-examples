@@ -1,57 +1,61 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Dimensions, StyleSheet, TextInput, View} from 'react-native';
 import Dialog from 'react-native-dialog';
 import {ConnectButton} from './ConnectButton';
 
 interface copyURIDialogProps {
-  wcURI: string;
-  setWCUri: (wcURI: string) => void;
   setVisible: () => void;
-  setApprovalModal: () => void;
   visible: boolean;
-  pair: () => void;
+  pair: (uri: string) => void;
 }
-export function CopyURIDialog({
-  visible,
-  wcURI,
-  setWCUri,
-  setVisible,
-  pair,
-}: copyURIDialogProps) {
+export function CopyURIDialog({visible, setVisible, pair}: copyURIDialogProps) {
   const windowWidth = Dimensions.get('window').width;
+  const [uri, setUri] = useState<string>('');
+
+  const onClose = () => {
+    setVisible();
+    setUri('');
+  };
+
+  const onPair = () => {
+    pair(uri);
+    onClose();
+  };
 
   return (
     <Dialog.Container
       visible={visible}
-      blurComponentIOS
+      useNativeDriver
       contentStyle={[styles.mainContainer, {maxWidth: windowWidth * 0.9}]}>
-      <View style={styles.contentContainer}>
+      <View>
         <Dialog.Title>Enter a WalletConnect URI</Dialog.Title>
-        <View>
-          <Dialog.Description style={styles.descriptionText}>
-            To get the URI press the copy to clipboard button from your dapp's
-            WalletConnect interface.
-          </Dialog.Description>
-        </View>
+        <Dialog.Description style={styles.descriptionText}>
+          To get the URI press the copy to clipboard button from your dapp's
+          WalletConnect interface.
+        </Dialog.Description>
 
         <View style={styles.flexRow}>
           <TextInput
             autoFocus
             style={[styles.textInput, {width: windowWidth * 0.8}]}
-            onChangeText={setWCUri}
-            value={wcURI}
+            onChangeText={setUri}
             placeholder="wc://a13aef..."
             clearButtonMode="always"
             enablesReturnKeyAutomatically
+            autoCapitalize="none"
           />
         </View>
 
-        <ConnectButton onPress={pair} />
+        <ConnectButton
+          onPress={onPair}
+          disabled={!uri}
+          style={styles.connectButton}
+        />
         <View style={styles.cancelContainer}>
           <Dialog.Button
             style={styles.cancelText}
             label="Cancel"
-            onPress={() => setVisible()}
+            onPress={onClose}
           />
         </View>
       </View>
@@ -61,17 +65,12 @@ export function CopyURIDialog({
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: 'rgba(242, 242, 247, 0.8)',
-    display: 'flex',
     justifyContent: 'center',
     alignItems: 'stretch',
-    height: 280,
+    height: 300,
     padding: 20,
     width: '90%',
     borderRadius: 34,
-  },
-  contentContainer: {
-    display: 'flex',
   },
   textInput: {
     height: 44,
@@ -100,5 +99,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     letterSpacing: 0.38,
     lineHeight: 24,
+    textTransform: 'capitalize',
+  },
+  connectButton: {
+    marginVertical: 4,
   },
 });
