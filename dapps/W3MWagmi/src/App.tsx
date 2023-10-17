@@ -13,14 +13,28 @@ import {
 } from '@web3modal/wagmi-react-native';
 import {FlexView, Text} from '@web3modal/ui-react-native';
 import {WagmiConfig} from 'wagmi';
-import {mainnet, polygon, arbitrum} from 'wagmi/chains';
+import {
+  arbitrum,
+  avalanche,
+  bsc,
+  fantom,
+  gnosis,
+  // sepolia,
+  // goerli,
+  mainnet,
+  optimism,
+  polygon,
+} from 'wagmi/chains';
 import {ENV_PROJECT_ID} from '@env';
 import {SignMessage} from './views/SignMessage';
 import {SendTransaction} from './views/SendTransaction';
 import {ReadContract} from './views/ReadContract';
+import {useCheckToken} from './useCheckToken';
 
 // 1. Get projectId
 const projectId = ENV_PROJECT_ID;
+
+const chains = [arbitrum, bsc, mainnet, polygon];
 
 // 2. Create config
 const metadata = {
@@ -32,8 +46,6 @@ const metadata = {
     native: 'w3mwagmisample://',
   },
 };
-
-const chains = [mainnet, polygon, arbitrum];
 
 const wagmiConfig = defaultWagmiConfig({chains, projectId, metadata});
 
@@ -49,22 +61,30 @@ function App(): JSX.Element {
 
   return (
     <WagmiConfig config={wagmiConfig}>
-      <SafeAreaView style={[styles.container, isDarkMode && styles.dark]}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <Text style={styles.title} variant="large-700">
-          Web3Modal + wagmi
-        </Text>
-        <FlexView gap="xs">
-          <W3mButton balance="show" />
-          <SignMessage />
-          <SendTransaction />
-          <ReadContract />
-        </FlexView>
-        <Web3Modal />
-      </SafeAreaView>
+      <Wrapper>
+        <SafeAreaView style={[styles.container, isDarkMode && styles.dark]}>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <Text style={styles.title} variant="large-700">
+            Web3Modal + wagmi
+          </Text>
+          <FlexView gap="xs">
+            <W3mButton balance="show" />
+            <SignMessage />
+            <SendTransaction />
+            <ReadContract />
+          </FlexView>
+          <Web3Modal />
+        </SafeAreaView>
+      </Wrapper>
     </WagmiConfig>
   );
 }
+
+const Wrapper = ({children}) => {
+  useCheckToken();
+
+  return <>{children}</>;
+};
 
 const styles = StyleSheet.create({
   container: {
